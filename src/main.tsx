@@ -1,0 +1,7 @@
+import { createRoot } from 'react-dom/client'
+import '@fontsource-variable/sora'
+import '@fontsource-variable/inter'
+import App from './App'
+import './styles.css'
+
+createRoot(document.getElementById('root')!).render(<App />)
