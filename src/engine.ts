@@ -44,8 +44,11 @@ export const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a
 // ---------- Import ----------
 export function bufferFromS16(data: Uint8Array): AudioBuffer {
   const frames = Math.floor(data.byteLength / 4)
-  const ab = data.buffer.slice(data.byteOffset, data.byteOffset + frames * 4)
-  const i16 = new Int16Array(ab)
+  // vista sui dati ricevuti (nessuna copia: per file lunghi evita centinaia di MB di picco di memoria)
+  const i16 =
+    data.byteOffset % 2 === 0
+      ? new Int16Array(data.buffer, data.byteOffset, frames * 2)
+      : new Int16Array(data.buffer.slice(data.byteOffset, data.byteOffset + frames * 4))
   const buf = new AudioBuffer({ numberOfChannels: 2, length: frames, sampleRate: SR })
   const l = buf.getChannelData(0)
   const r = buf.getChannelData(1)

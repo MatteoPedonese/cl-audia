@@ -77,11 +77,21 @@ export default function Timeline(p: Props) {
   }, [p.onZoom])
 
   // ---------- disegno ----------
+  // il ridisegno è raggruppato su un solo frame: scroll e trascinamenti rapidi non lo ripetono più volte
   useEffect(() => {
-    const cv = cvRef.current!
+    const id = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(id)
+  }, [tracks, pps, scrollX, vw, selectedId, range, p.srcVer, H, p.chapters])
+
+  function draw() {
+    const cv = cvRef.current
+    if (!cv) return
     const dpr = window.devicePixelRatio || 1
-    cv.width = Math.round(vw * dpr)
-    cv.height = Math.round(H * dpr)
+    const cw = Math.round(vw * dpr)
+    const ch = Math.round(H * dpr)
+    // ridimensionare il canvas lo svuota e rialloca la memoria: solo se serve davvero
+    if (cv.width !== cw) cv.width = cw
+    if (cv.height !== ch) cv.height = ch
     const g = cv.getContext('2d')!
     g.setTransform(dpr, 0, 0, dpr, 0, 0)
     const css = getComputedStyle(document.documentElement)
@@ -259,7 +269,7 @@ export default function Timeline(p: Props) {
     }
     g.fillStyle = col('--border')
     g.fillRect(0, RULER - 1, vw, 1)
-  }, [tracks, pps, scrollX, vw, selectedId, range, p.srcVer, H, p.chapters])
+  }
 
   // ---------- interazione ----------
   const pt = (e: { clientX: number; clientY: number }) => {

@@ -291,7 +291,7 @@ export default function Recorder({ outId, onOutChange, onClose, onDone, canListe
           <div className="rec-time">{recording ? fmtTime(elapsed) : ready ? 'Pronto' : err ? '—' : 'Attendo il microfono…'}</div>
         </div>
         <small className="rec-note">
-          La registrazione viene salvata in <b>Documenti › Podcast Editor › Registrazioni</b> e aggiunta alla timeline nel punto del cursore.
+          La registrazione viene salvata in <b>Documenti › Tidycast › Registrazioni</b> e aggiunta alla timeline nel punto del cursore.
         </small>
 
         <div className="modal-actions">

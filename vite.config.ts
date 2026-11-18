@@ -5,5 +5,6 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   server: { port: 5173, strictPort: true },
-  build: { outDir: 'dist' },
+  // Electron ha un Chromium recente: niente codice di compatibilità per browser vecchi
+  build: { outDir: 'dist', target: 'chrome130', reportCompressedSize: false },
 })

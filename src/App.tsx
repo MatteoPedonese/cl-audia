@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Timeline, { Range } from './Timeline'
 import Recorder from './Recorder'
+import Logo, { LogoMark } from './Logo'
 import Transcript, { AsrState } from './Transcript'
 import {
   Chapter,
@@ -184,7 +185,7 @@ export default function App() {
   const projectName = projectPath ? (projectPath.split(/[\\/]/).pop() ?? '').replace(/\.podcast$/i, '') : 'Senza titolo'
 
   useEffect(() => {
-    document.title = `${dirty ? '• ' : ''}${projectName} — Podcast Editor`
+    document.title = `${dirty ? '• ' : ''}${projectName} — Tidycast`
     window.onbeforeunload = dirty ? () => false : null
   }, [dirty, projectName])
 
@@ -441,7 +442,7 @@ export default function App() {
     const transcripts: Record<string, Word[]> = {}
     for (const id of used) if (tx.has(id)) transcripts[id] = tx.get(id)!
     const text = JSON.stringify(
-      { app: 'podcast-editor', version: 3, projectPath: withPath ? projectPath : undefined, sources: srcs, tracks: snapshot, meta, chapters, transcripts },
+      { app: 'tidycast', version: 3, projectPath: withPath ? projectPath : undefined, sources: srcs, tracks: snapshot, meta, chapters, transcripts },
       null,
       1,
     )
@@ -454,9 +455,10 @@ export default function App() {
     let proj: { app?: string; sources?: { id: string; name: string; path: string }[]; tracks?: Track[]; meta?: Partial<ExportMeta>; chapters?: Chapter[]; transcripts?: Record<string, Word[]> }
     try {
       proj = JSON.parse(text)
-      if (proj.app !== 'podcast-editor' || !proj.tracks || !proj.sources) throw new Error()
+      // 'podcast-editor' è il vecchio nome dell'app: i progetti già salvati restano apribili
+      if (!['tidycast', 'podcast-editor'].includes(proj.app ?? '') || !proj.tracks || !proj.sources) throw new Error()
     } catch {
-      return flash('Questo file non è un progetto di Podcast Editor valido.')
+      return flash('Questo file non è un progetto di Tidycast valido.')
     }
     pause()
     sources.clear()
@@ -529,7 +531,7 @@ export default function App() {
         const r = await window.api.autosaveRead()
         if (r) {
           const pr = JSON.parse(r.text)
-          if (pr.app === 'podcast-editor' && pr.tracks?.some((t: Track) => t.clips.length)) setRecovery({ text: r.text, mtime: r.mtime, path: pr.projectPath ?? null })
+          if (['tidycast', 'podcast-editor'].includes(pr.app) && pr.tracks?.some((t: Track) => t.clips.length)) setRecovery({ text: r.text, mtime: r.mtime, path: pr.projectPath ?? null })
           else await window.api.autosaveClear()
         }
       } catch {}
@@ -878,6 +880,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="toolbar">
+        <Logo playing={playing} />
         <div className="group">
           <button className="btn" title="Nuovo progetto (Ctrl+N)" onClick={newProject}>
             Nuovo
@@ -983,7 +986,9 @@ export default function App() {
         {!hasAudio && (
           <div className="empty" onClick={doImport}>
             <div className="empty-card">
-              <div className="empty-ic">♪</div>
+              <div className="empty-ic">
+                <LogoMark size={76} />
+              </div>
               <h2>Inizia importando un audio</h2>
               <p>Trascina qui un file (MP3, WAV, M4A, FLAC, OGG…) oppure clicca per sceglierlo.</p>
             </div>

@@ -9,6 +9,11 @@ if (app.isPackaged) ffmpegPath = ffmpegPath.replace('app.asar', 'app.asar.unpack
 
 let win = null
 
+// L'app si chiamava "Podcast Editor": se esiste ancora la vecchia cartella dati la si continua a usare,
+// così non si perdono il salvataggio automatico e il modello vocale già scaricato.
+const legacyUserData = path.join(app.getPath('appData'), 'Podcast Editor')
+if (fs.existsSync(legacyUserData)) app.setPath('userData', legacyUserData)
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1360,
@@ -16,7 +21,8 @@ function createWindow() {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#0a0f24',
-    title: 'Podcast Editor',
+    title: 'Tidycast',
+    icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -169,7 +175,7 @@ ipcMain.handle('project:save', async (_e, o) => {
     const r = await dialog.showSaveDialog(win, {
       title: 'Salva progetto',
       defaultPath: `${o.defaultName || 'Il mio podcast'}.podcast`,
-      filters: [{ name: 'Progetto Podcast Editor', extensions: ['podcast'] }],
+      filters: [{ name: 'Progetto Tidycast', extensions: ['podcast'] }],
     })
     if (r.canceled || !r.filePath) return { canceled: true }
     target = r.filePath
@@ -188,7 +194,7 @@ ipcMain.handle('project:open', async (_e, p) => {
     const r = await dialog.showOpenDialog(win, {
       title: 'Apri progetto',
       properties: ['openFile'],
-      filters: [{ name: 'Progetto Podcast Editor', extensions: ['podcast'] }],
+      filters: [{ name: 'Progetto Tidycast', extensions: ['podcast'] }],
     })
     if (r.canceled || !r.filePaths[0]) return { canceled: true }
     target = r.filePaths[0]
@@ -234,7 +240,7 @@ ipcMain.handle('mic:access', async () => {
 let rec = null
 
 ipcMain.handle('rec:begin', () => {
-  const dir = path.join(app.getPath('documents'), 'Podcast Editor', 'Registrazioni')
+  const dir = path.join(app.getPath('documents'), 'Tidycast', 'Registrazioni')
   fs.mkdirSync(dir, { recursive: true })
   const d = new Date()
   const p2 = (n) => String(n).padStart(2, '0')
@@ -299,7 +305,7 @@ ipcMain.handle('audio:enhance', (_e, srcPath, thr) => {
       'alimiter=limit=0.95',
     ].join(',')
     const hash = crypto.createHash('md5').update(`${srcPath}|${st.mtimeMs}|${st.size}|${filter}`).digest('hex').slice(0, 10)
-    const dir = path.join(app.getPath('documents'), 'Podcast Editor', 'Elaborati')
+    const dir = path.join(app.getPath('documents'), 'Tidycast', 'Elaborati')
     fs.mkdirSync(dir, { recursive: true })
     const base = path.basename(srcPath).replace(/\.[^.]+$/, '')
     const out = path.join(dir, `${base}-voce-${hash}.wav`)

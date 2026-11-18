@@ -234,6 +234,38 @@ select:focus, .modal input[type=text]:focus { outline: none; border-color: #5b9b
 .scroller::-webkit-scrollbar-thumb { background: #2d3b6e; }
 .scroller::-webkit-scrollbar-thumb:hover { background: #4a5da0; }
 
+/* ---------- Logo con cuffie ---------- */
+.logo { --ring: var(--panel); position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 8px 24px 5px; margin-right: 6px; user-select: none; --logo-ring: #131a36; }
+.logo-word { font-family: var(--font-head); font-size: calc(var(--logo-size, 24px) * .82); letter-spacing: -0.03em; line-height: 1; display: inline-flex; }
+.logo-tidy { font-weight: 400; color: var(--text); }
+.logo-cast { font-weight: 800; background: linear-gradient(135deg, #8dbcff, #3b82f6 60%, #2563eb); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.logo-mark { display: block; flex: none; }
+
+/* archetto sopra la scritta */
+.logo-band { position: absolute; left: 7px; right: 7px; top: 0; height: 62%; border: 3px solid #5b9bff; border-bottom: 0; border-radius: 999px 999px 0 0; opacity: .9; transition: box-shadow .3s, border-color .3s; }
+/* padiglioni ai lati */
+.logo-cup { position: absolute; top: 24%; width: 12px; height: 56%; border-radius: 6px; background: linear-gradient(160deg, #ffa07f, #ef5a36); box-shadow: 0 2px 8px rgba(239,90,54,.35); transform-origin: center; }
+.logo-cup.left { left: 0; }
+.logo-cup.right { right: 0; }
+/* onde sonore che escono dai padiglioni, visibili solo durante la riproduzione */
+.logo-cup::before, .logo-cup::after { content: ''; position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 2px solid #fb7c5a; border-radius: 50%; opacity: 0; }
+.logo-cup.left::before, .logo-cup.left::after { right: 100%; border-right-color: transparent; border-top-color: transparent; border-bottom-color: transparent; }
+.logo-cup.right::before, .logo-cup.right::after { left: 100%; border-left-color: transparent; border-top-color: transparent; border-bottom-color: transparent; }
+
+.logo.playing .logo-band { border-color: #8dbcff; box-shadow: 0 -4px 14px rgba(91,155,255,.45); }
+.logo.playing .logo-cup { animation: cupBeat .5s var(--ease, ease-in-out) infinite alternate; }
+.logo.playing .logo-cup.right { animation-delay: .25s; }
+.logo.playing .logo-cup::before { animation: waveOut 1.1s ease-out infinite; }
+.logo.playing .logo-cup::after { animation: waveOut 1.1s ease-out .55s infinite; }
+.logo.playing .logo-bars rect { transform-box: fill-box; transform-origin: center; animation: barDance .8s ease-in-out infinite alternate; }
+.logo.playing .logo-bars rect:nth-child(2) { animation-delay: .12s; }
+.logo.playing .logo-bars rect:nth-child(3) { animation-delay: .24s; }
+.logo.playing .logo-bars rect:nth-child(4) { animation-delay: .08s; }
+.logo.playing .logo-bars rect:nth-child(5) { animation-delay: .2s; }
+@keyframes cupBeat { from { transform: scaleY(1) scaleX(1); } to { transform: scaleY(.9) scaleX(1.22); } }
+@keyframes waveOut { 0% { opacity: .9; transform: scale(.6); } 100% { opacity: 0; transform: scale(2); } }
+@keyframes barDance { from { transform: scaleY(.45); } to { transform: scaleY(1.2); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
 }

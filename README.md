@@ -1,6 +1,6 @@
-# Podcast Editor
+# Tidycast
 
-Editor audio semplice per podcast (Windows e macOS). Electron + React + TypeScript, Web Audio per il motore, ffmpeg incluso (`ffmpeg-static`) per import/export.
+Editor audio semplice per podcast (Windows e macOS). In precedenza si chiamava "Podcast Editor": i progetti `.podcast` già salvati si aprono ancora, e se esiste la vecchia cartella dati dell'app (`Podcast Editor` in AppData) viene riutilizzata, così non si perdono il salvataggio automatico e il modello vocale già scaricato. Electron + React + TypeScript, Web Audio per il motore, ffmpeg incluso (`ffmpeg-static`) per import/export.
 
 ## Comandi
 
@@ -22,8 +22,8 @@ Il riconoscimento vocale usa `onnxruntime-node`, che per macOS include solo i bi
 - **Sposta**: trascina un pezzo (anche tra tracce, con calamita sui bordi). Trascina i bordi per accorciare.
 - **Fade**: slider nel pannello in basso o maniglie bianche sul pezzo selezionato.
 - **Progetto**: Nuovo (`Ctrl+N`, con **modelli di partenza**: “Solo voce con intro e outro”, “Intervista a due”, “Voce con musica di sottofondo”, con tracce già nominate e impostate), Apri (`Ctrl+O`, o trascina un file `.podcast`), Salva (`Ctrl+S`, `Ctrl+Maiusc+S` per "Salva con nome"). Il progetto è un piccolo file che *punta* ai file audio originali: non spostarli o cancellarli. Se all'apertura ne manca qualcuno, l'app lo segnala.
-- **Registra**: scegli microfono e uscita audio (con indicatore di livello), premi il pulsante rosso. La registrazione è scritta su disco mentre parli (`Documenti/Podcast Editor/Registrazioni`, WAV) e inserita nel punto del cursore sulla prima traccia libera. Importa è `Ctrl+I`.
-- **✨ Migliora voce** (pannello in basso): riduce fruscio e rumori di fondo, toglie i rimbombi bassi e rende il volume della voce più uniforme. Lavora su una *copia* (`Documenti/Podcast Editor/Elaborati`): l'originale non viene toccato e si può tornare indietro in ogni momento. Senza selezione agisce su tutte le tracce che non sono musica.
+- **Registra**: scegli microfono e uscita audio (con indicatore di livello), premi il pulsante rosso. La registrazione è scritta su disco mentre parli (`Documenti/Tidycast/Registrazioni`, WAV) e inserita nel punto del cursore sulla prima traccia libera. Importa è `Ctrl+I`.
+- **✨ Migliora voce** (pannello in basso): riduce fruscio e rumori di fondo, toglie i rimbombi bassi e rende il volume della voce più uniforme. Lavora su una *copia* (`Documenti/Tidycast/Elaborati`): l'originale non viene toccato e si può tornare indietro in ogni momento. Senza selezione agisce su tutte le tracce che non sono musica.
 - **🔇 Rimuovi silenzi**: accorcia le pause lunghe (intensità Leggera/Normale/Forte), con anteprima di quanti secondi verranno tolti. La soglia si adatta da sola al rumore di fondo della registrazione.
 - **♫ Abbassa con la voce** (su ogni traccia): per la musica. Quando si parla sulle altre tracce la musica scende di circa 14 dB e risale nelle pause. La forma d'onda mostra l'abbassamento.
 - **Esportazione**: titolo, podcast, autore, numero episodio, descrizione e copertina (JPG/PNG) vengono scritti nel file (copertina per MP3, M4A, FLAC). I dati del progetto restano salvati nel `.podcast`.
