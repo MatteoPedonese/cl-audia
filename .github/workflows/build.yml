@@ -35,10 +35,29 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false' # app non firmata
       - uses: actions/upload-artifact@v4
+        id: upload
         with:
           name: installer-${{ matrix.name }}
           path: ${{ matrix.pattern }}
           if-no-files-found: error
+      - name: Email con il link di download (solo Mac)
+        if: matrix.name == 'mac'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          secure: ${{ secrets.MAIL_PORT == '465' }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: Tidycast Build <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.MAIL_TO }}
+          subject: Tidycast per Mac pronto (${{ github.ref_name }})
+          html_body: |
+            <p>La build per <b>Mac</b> di Tidycast è pronta.</p>
+            <p><a href="${{ steps.upload.outputs.artifact-url }}">Scarica l'installer (.dmg)</a>
+            <br><small>Serve l'accesso a GitHub con un account che ha i permessi sul repository.</small></p>
+            <p>Esecuzione: <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}</a></p>
+            ${{ startsWith(github.ref, 'refs/tags/v') && format('<p>Release: <a href="{0}/{1}/releases/tag/{2}">{0}/{1}/releases/tag/{2}</a></p>', github.server_url, github.repository, github.ref_name) || '' }}
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
