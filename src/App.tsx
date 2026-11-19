@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import Timeline, { Range } from './Timeline'
 import Recorder from './Recorder'
 import Logo, { LogoMark } from './Logo'
+import { ValueSlider } from './ValueSlider'
+import ContextMenu, { MenuItem } from './ContextMenu'
 import Transcript, { AsrState } from './Transcript'
 import {
   Chapter,
@@ -330,6 +332,89 @@ export default function App() {
       commit((ts) => removeClip(ts, selectedId, ripple))
       setSelectedId(null)
     } else flash('Seleziona un pezzo di audio, oppure trascina sul righello per scegliere la parte da eliminare.')
+  }
+
+  // ---------- Menu contestuale (click destro sulla timeline) ----------
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
+  const closeCtx = useCallback(() => setCtxMenu(null), [])
+  const openContext = (info: { cx: number; cy: number; time: number; clipId: string | null }) => {
+    const { time, clipId } = info
+    const clip = clipId ? tracksRef.current.flatMap((t) => t.clips).find((c) => c.id === clipId) : undefined
+    const inRange = !!range && time >= range.a && time <= range.b
+    const canSplit = !!clip && time > clip.start + 0.02 && time < clip.start + clip.duration - 0.02
+    const items: MenuItem[] = [
+      {
+        icon: '✂',
+        label: 'Dividi qui',
+        hint: 'S',
+        disabled: !canSplit,
+        onClick: () => {
+          posRef.current = time
+          renderPos()
+          const r = splitAt(tracksRef.current, time, clipId)
+          if (r.rightId === null) return flash('Non si può dividere in questo punto.')
+          commit(() => r.tracks)
+          setSelectedId(r.rightId)
+        },
+      },
+      {
+        icon: '🗑',
+        label: inRange ? 'Elimina la parte selezionata' : 'Elimina pezzo',
+        hint: 'Canc',
+        danger: true,
+        disabled: !inRange && !clip,
+        onClick: () => {
+          if (inRange) doDelete()
+          else if (clipId) {
+            commit((ts) => removeClip(ts, clipId, ripple))
+            setSelectedId(null)
+          }
+        },
+      },
+      { sep: true },
+      {
+        icon: '◢',
+        label: 'Dissolvenza in entrata 1,5 s',
+        disabled: !clip,
+        onClick: () => clipId && setClip(clipId, (c) => clampFades({ ...c, fadeIn: 1.5 })),
+      },
+      {
+        icon: '◣',
+        label: 'Dissolvenza in uscita 1,5 s',
+        disabled: !clip,
+        onClick: () => clipId && setClip(clipId, (c) => clampFades({ ...c, fadeOut: 1.5 })),
+      },
+      {
+        icon: '⊘',
+        label: 'Togli le dissolvenze',
+        disabled: !clip || (clip.fadeIn === 0 && clip.fadeOut === 0),
+        onClick: () => clipId && setClip(clipId, (c) => ({ ...c, fadeIn: 0, fadeOut: 0 })),
+      },
+      { sep: true },
+      {
+        icon: '⚑',
+        label: 'Aggiungi capitolo qui',
+        hint: 'M',
+        disabled: !hasAudio,
+        onClick: () => {
+          posRef.current = time
+          renderPos()
+          addChapter()
+        },
+      },
+      {
+        icon: '▸',
+        label: 'Posiziona il cursore qui',
+        disabled: !hasAudio,
+        onClick: () => seek(time),
+      },
+      { sep: true },
+      { icon: '↶', label: 'Annulla', hint: 'Ctrl+Z', disabled: !h.past.length, onClick: undo },
+      { icon: '↷', label: 'Ripeti', hint: 'Ctrl+Y', disabled: !h.future.length, onClick: redo },
+      { sep: true },
+      { icon: '＋', label: 'Importa audio…', hint: 'Ctrl+I', onClick: doImport },
+    ]
+    setCtxMenu({ x: info.cx, y: info.cy, items })
   }
 
   const setClip = (id: string, fn: (c: Clip) => Clip) => commit((ts) => updateClip(ts, id, fn))
@@ -969,6 +1054,7 @@ export default function App() {
           onTrack={onTrack}
           onAddTrack={onAddTrack}
           onRemoveTrack={onRemoveTrack}
+          onContext={openContext}
           corner={
             <>
               <button className="btn icon-only mini" title="Riduci (-)" onClick={() => zoomTo(pps / 1.25)}>
@@ -1005,42 +1091,39 @@ export default function App() {
             </div>
             <label className="slider">
               <span>Dissolvenza in entrata</span>
-              <input
-                type="range"
+              <ValueSlider
                 min={0}
                 max={Math.min(15, maxFade)}
                 step={0.1}
                 value={selected.fadeIn}
+                label={`${selected.fadeIn.toFixed(1)}s`}
                 onPointerDown={mark}
-                onChange={(e) => live((ts) => updateClip(ts, selected.id, (c) => clampFades({ ...c, fadeIn: +e.target.value })))}
+                onChange={(v) => live((ts) => updateClip(ts, selected.id, (c) => clampFades({ ...c, fadeIn: v })))}
               />
-              <b>{selected.fadeIn.toFixed(1)} s</b>
             </label>
             <label className="slider">
               <span>Dissolvenza in uscita</span>
-              <input
-                type="range"
+              <ValueSlider
                 min={0}
                 max={Math.min(15, maxFade)}
                 step={0.1}
                 value={selected.fadeOut}
+                label={`${selected.fadeOut.toFixed(1)}s`}
                 onPointerDown={mark}
-                onChange={(e) => live((ts) => updateClip(ts, selected.id, (c) => clampFades({ ...c, fadeIn: c.fadeIn, fadeOut: Math.min(+e.target.value, c.duration - c.fadeIn) })))}
+                onChange={(v) => live((ts) => updateClip(ts, selected.id, (c) => clampFades({ ...c, fadeIn: c.fadeIn, fadeOut: Math.min(v, c.duration - c.fadeIn) })))}
               />
-              <b>{selected.fadeOut.toFixed(1)} s</b>
             </label>
             <label className="slider">
               <span>Volume</span>
-              <input
-                type="range"
+              <ValueSlider
                 min={0}
                 max={2}
                 step={0.01}
                 value={selected.gain}
+                label={`${Math.round(selected.gain * 100)}%`}
                 onPointerDown={mark}
-                onChange={(e) => live((ts) => updateClip(ts, selected.id, (c) => ({ ...c, gain: +e.target.value })))}
+                onChange={(v) => live((ts) => updateClip(ts, selected.id, (c) => ({ ...c, gain: v })))}
               />
-              <b>{Math.round(selected.gain * 100)}%</b>
             </label>
             <div className="quick">
               <button className="btn sm" onClick={() => setClip(selected.id, (c) => clampFades({ ...c, fadeIn: 1.5 }))}>
@@ -1511,6 +1594,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {ctxMenu && <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxMenu.items} onClose={closeCtx} />}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { RefObject, useEffect, useRef, useState } from 'react'
+import { ValueSlider } from './ValueSlider'
 import { Chapter, Clip, MIN_CLIP, Track, clamp, clipGainAt, clampFades, duckEnvelope, envAt, sources } from './engine'
 
 export const RULER = 30
@@ -32,6 +33,7 @@ interface Props {
   onTrack: (id: string, patch: Partial<Track>) => void
   onAddTrack: () => void
   onRemoveTrack: (id: string) => void
+  onContext: (info: { cx: number; cy: number; time: number; clipId: string | null }) => void
   corner?: React.ReactNode
 }
 
@@ -393,6 +395,21 @@ export default function Timeline(p: Props) {
     ovRef.current!.style.cursor = 'default'
   }
 
+  const onContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const { x, y } = pt(e)
+    const time = Math.max(0, x / pps)
+    const h = hit(x, y)
+    if (h) {
+      p.onSelect(h.c.id)
+      p.onRange(null)
+    } else if (!range || time < range.a || time > range.b) {
+      p.onSelect(null)
+      p.onRange(null)
+    }
+    p.onContext({ cx: e.clientX, cy: e.clientY, time, clipId: h ? h.c.id : null })
+  }
+
   return (
     <div className="tl">
       <div className="heads">
@@ -417,14 +434,14 @@ export default function Timeline(p: Props) {
               >
                 {t.muted ? 'Muto' : 'Audio'}
               </button>
-              <input
-                type="range"
+              <ValueSlider
                 min={0}
                 max={1.5}
                 step={0.01}
                 value={t.volume}
+                label={`${Math.round(t.volume * 100)}%`}
                 title={`Volume traccia ${Math.round(t.volume * 100)}%`}
-                onChange={(e) => p.onTrack(t.id, { volume: +e.target.value })}
+                onChange={(v) => p.onTrack(t.id, { volume: v })}
               />
             </div>
             <div className="head-row">
@@ -445,7 +462,7 @@ export default function Timeline(p: Props) {
       <div className="scroller" ref={p.scrollRef} onScroll={(e) => setScrollX(e.currentTarget.scrollLeft)}>
         <div className="inner" style={{ width: totalW, height: H }}>
           <canvas ref={cvRef} className="cv" style={{ width: vw, height: H }} />
-          <div ref={ovRef} className="overlay" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}>
+          <div ref={ovRef} className="overlay" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onContextMenu={onContextMenu}>
             <div ref={p.playheadRef} className="playhead" style={{ height: H }} />
           </div>
         </div>
